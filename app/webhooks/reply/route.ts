@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import neynarClient from "../../neynarClient";
+import { Cast as CastV2 } from "@neynar/nodejs-sdk/build/neynar-api/v2/openapi-farcaster/models/cast.js";
 
 /**
  * Post to /webhooks/reply?secret=.... with body type: { data: { author: { username: string }, hash: string } }
@@ -17,21 +18,24 @@ export async function POST(req: NextRequest, res: NextResponse) {
     return NextResponse.json({ message: "invalid webhook" }, { status: 401 });
   }
 
-  const hookData = await req.json();
+  const hookData = (await req.json()) as {
+    created_at: number;
+    type: "cast.created";
+    data: CastV2;
+  };
 
-  const reply = await neynarClient.publishCast(
-    process.env.SIGNER_UUID,
-    `gm ${hookData.data.author.username}`,
-    {
-      replyTo: hookData.data.hash,
-      //   embeds: [
-      //     {
-      //       url: frame.link,
-      //     },
-      //   ],
-    }
-  );
-  console.log("reply:", reply);
+  const search = hookData.data.text.replace("@search", "").trim();
+
+  const reply = await neynarClient.publishCast(process.env.SIGNER_UUID, ``, {
+    replyTo: hookData.data.hash,
+    embeds: [
+      {
+        url: `https://search-frame.vercel.app?query=${encodeURIComponent(
+          search
+        )}`,
+      },
+    ],
+  });
 
   return NextResponse.json({
     message: reply,
