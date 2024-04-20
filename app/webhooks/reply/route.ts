@@ -26,6 +26,8 @@ export async function POST(req: NextRequest, res: NextResponse) {
 
   const search = hookData.data.text.replace("@search", "").trim();
 
+  console.log(hookData.data.text);
+
   const reply = await neynarClient.publishCast(process.env.SIGNER_UUID, ``, {
     replyTo: hookData.data.hash,
     embeds: [
